@@ -1,39 +1,44 @@
 const express = require('express');
 const { google } = require('googleapis');
+const fs = require('fs'); // <--- THÊM DÒNG NÀY
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 10000; // Sửa thành 10000 như log của Render
 
 // Thiết lập EJS làm công cụ tạo mẫu (template engine)
 app.set('view engine', 'ejs');
 app.use(express.static('public'));
 
 // --- BIẾN MÔI TRƯỜNG CẦN THIẾT ---
-// Chúng ta sẽ thiết lập chúng trong Render, không viết code cứng ở đây
-const GOOGLE_CREDENTIALS_JSON = process.env.GOOGLE_CREDENTIALS;
+// Đây là ĐƯỜNG DẪN đến file bí mật (do Render cung cấp)
+const GOOGLE_CREDENTIALS_PATH = process.env.GOOGLE_CREDENTIALS;
 const FOLDER_ID = process.env.DRIVE_FOLDER_ID;
 
-// Hàm xác thực với Google
+// Hàm xác thực với Google (ĐÃ CẬP NHẬT)
 async function getGoogleAuth() {
-  if (!GOOGLE_CREDENTIALS_JSON) {
-    console.error('LỖI: Biến môi trường GOOGLE_CREDENTIALS chưa được thiết lập.');
+  if (!GOOGLE_CREDENTIALS_PATH) {
+    console.error('LỖI: Biến môi trường GOOGLE_CREDENTIALS (chỉ đường dẫn) chưa được thiết lập.');
     return null;
   }
-  
+
+  // Kiểm tra xem file bí mật có tồn tại tại đường dẫn đó không
+  if (!fs.existsSync(GOOGLE_CREDENTIALS_PATH)) {
+    console.error(`LỖI: Không tìm thấy file credentials tại: ${GOOGLE_CREDENTIALS_PATH}`);
+    return null;
+  }
+
   try {
-    // Phân tích chuỗi JSON từ Biến Môi trường
-    const credentials = JSON.parse(GOOGLE_CREDENTIALS_JSON);
-    
-    // Yêu cầu quyền chỉ đọc (readonly)
     const scopes = ['https://www.googleapis.com/auth/drive.readonly'];
     
+    // Sử dụng 'keyFile' thay vì 'credentials'
+    // Thư viện Google sẽ tự động đọc và phân tích file JSON tại đường dẫn này
     const auth = new google.auth.GoogleAuth({
-      credentials,
+      keyFile: GOOGLE_CREDENTIALS_PATH,
       scopes,
     });
     
     return auth;
   } catch (err) {
-    console.error('LỖI: Không thể phân tích GOOGLE_CREDENTIALS:', err.message);
+    console.error('LỖI: Không thể xác thực bằng keyFile:', err.message);
     return null;
   }
 }
@@ -49,16 +54,12 @@ app.get('/', async (req, res) => {
 
   try {
     const response = await drive.files.list({
-      // Tìm các file nằm trong thư mục FOLDER_ID
       q: `'${FOLDER_ID}' in parents`,
-      // Chỉ lấy các trường (fields) chúng ta cần
       fields: 'files(id, name)',
-      orderBy: 'name', // Sắp xếp theo tên
+      orderBy: 'name',
     });
 
     const files = response.data.files;
-    
-    // Gửi mảng 'files' đến file 'index.ejs' để hiển thị
     res.render('index', { files: files });
 
   } catch (error) {
