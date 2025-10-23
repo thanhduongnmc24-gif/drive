@@ -20,25 +20,12 @@
     .file-name { 
       font-size: 1.1em; 
       color: #0056b3;
-      /* Thêm vào để xử lý tên file dài */
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
     
-    /* CSS cho nút Tải xuống */
-    .download-btn {
-      text-decoration: none;
-      padding: 8px 15px;
-      background-color: #28a745;
-      color: white;
-      border-radius: 5px;
-      font-weight: bold;
-      transition: background-color 0.2s;
-      margin-left: 20px; 
-      flex-shrink: 0; /* Ngăn nút bị co lại */
-    }
-    .download-btn:hover { background-color: #218838; }
+    /* CSS cho nút Tải xuống (.download-btn) ĐÃ BỊ XÓA */
 
     /* CSS cho link Thư mục */
     .folder-link {
@@ -47,6 +34,13 @@
       font-weight: bold;
     }
     .folder-link:hover { text-decoration: underline; }
+
+    /* THÊM MỚI: CSS cho link File (thay cho nút tải) */
+    .file-link {
+      text-decoration: none;
+      color: #0056b3;
+    }
+    .file-link:hover { text-decoration: underline; }
 
     /* CSS cho link Quay về */
     .nav-link {
@@ -81,16 +75,16 @@
                 📁 <%= item.name %>
               </a>
             </span>
-            <% } else { %>
+
+          <% } else { %>
             <span class="file-name">
-              <%= item.name %>
+              <a href="https://drive.google.com/uc?export=download&id=<%= item.id %>" 
+                 class="file-link" 
+                 target="_blank">
+                <%= item.name %>
+              </a>
             </span>
-            <a href="https://drive.google.com/uc?export=download&id=<%= item.id %>" 
-               class="download-btn" 
-               target="_blank">
-              Tải xuống
-            </a>
-          <% } %>
+            <% } %>
 
         </li>
       <% }); %>
