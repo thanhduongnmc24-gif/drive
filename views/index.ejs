@@ -1,1 +1,56 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Danh sách File từ Drive</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; }
+    h1 { color: #333; }
+    ul { list-style-type: none; padding: 0; }
+    li {
+      background-color: #fff;
+      margin-bottom: 10px;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .file-name { font-size: 1.1em; color: #0056b3; }
+    .download-btn {
+      text-decoration: none;
+      padding: 8px 15px;
+      background-color: #28a745;
+      color: white;
+      border-radius: 5px;
+      font-weight: bold;
+      transition: background-color 0.2s;
+    }
+    .download-btn:hover { background-color: #218838; }
+  </style>
+</head>
+<body>
+  <h1>Danh sách File của tôi</h1>
 
+  <% if (files && files.length > 0) { %>
+    <ul>
+      <% files.forEach(file => { %>
+        <li>
+          <span class="file-name"><%= file.name %></span>
+          
+          <a href="https://drive.google.com/uc?export=download&id=<%= file.id %>" 
+             class="download-btn" 
+             target="_blank">
+            Tải xuống
+          </a>
+        </li>
+      <% }); %>
+    </ul>
+  <% } else { %>
+    <p>Không tìm thấy file nào trong thư mục.</p>
+  <% } %>
+
+</body>
+</html>
