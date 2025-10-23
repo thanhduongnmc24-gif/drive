@@ -15,10 +15,18 @@
       border: 1px solid #ddd;
       border-radius: 5px;
       display: flex;
-      justify-content: space-between;
       align-items: center;
     }
-    .file-name { font-size: 1.1em; color: #0056b3; }
+    .file-name { 
+      font-size: 1.1em; 
+      color: #0056b3;
+      /* Thêm vào để xử lý tên file dài */
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    /* CSS cho nút Tải xuống */
     .download-btn {
       text-decoration: none;
       padding: 8px 15px;
@@ -27,24 +35,63 @@
       border-radius: 5px;
       font-weight: bold;
       transition: background-color 0.2s;
+      margin-left: 20px; 
+      flex-shrink: 0; /* Ngăn nút bị co lại */
     }
     .download-btn:hover { background-color: #218838; }
+
+    /* CSS cho link Thư mục */
+    .folder-link {
+      text-decoration: none;
+      color: #0056b3;
+      font-weight: bold;
+    }
+    .folder-link:hover { text-decoration: underline; }
+
+    /* CSS cho link Quay về */
+    .nav-link {
+      display: inline-block;
+      margin-bottom: 20px;
+      font-size: 1.1em;
+      text-decoration: none;
+      padding: 8px 15px;
+      background-color: #007bff;
+      color: white;
+      border-radius: 5px;
+    }
+    .nav-link:hover { background-color: #0056b3; }
   </style>
 </head>
 <body>
   <h1>Danh sách File của tôi</h1>
 
-  <% if (files && files.length > 0) { %>
+  <% if (currentFolderId !== rootFolderId) { %>
+    <a href="/" class="nav-link">⬅️ Quay về thư mục gốc</a>
+  <% } %>
+
+
+  <% if (items && items.length > 0) { %>
     <ul>
-      <% files.forEach(file => { %>
+      <% items.forEach(item => { %>
         <li>
-          <span class="file-name"><%= file.name %></span>
           
-          <a href="https://drive.google.com/uc?export=download&id=<%= file.id %>" 
-             class="download-btn" 
-             target="_blank">
-            Tải xuống
-          </a>
+          <% if (item.mimeType === 'application/vnd.google-apps.folder') { %>
+            <span class="file-name">
+              <a href="/<%= item.id %>" class="folder-link">
+                📁 <%= item.name %>
+              </a>
+            </span>
+            <% } else { %>
+            <span class="file-name">
+              <%= item.name %>
+            </span>
+            <a href="https://drive.google.com/uc?export=download&id=<%= item.id %>" 
+               class="download-btn" 
+               target="_blank">
+              Tải xuống
+            </a>
+          <% } %>
+
         </li>
       <% }); %>
     </ul>
