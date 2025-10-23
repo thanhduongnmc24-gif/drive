@@ -1,36 +1,34 @@
 const express = require('express');
 const { google } = require('googleapis');
-const fs = require('fs'); // <--- THÊM DÒNG NÀY
+const fs = require('fs'); // Thư viện kiểm tra file
 const app = express();
-const port = process.env.PORT || 10000; // Sửa thành 10000 như log của Render
+const port = process.env.PORT || 10000;
 
-// Thiết lập EJS làm công cụ tạo mẫu (template engine)
+// --- ĐÂY LÀ THAY ĐỔI QUAN TRỌNG ---
+// Render luôn đặt "Secret Files" tại đường dẫn /etc/secrets/<tên_file>
+// Chúng ta sẽ tham chiếu trực tiếp đến nó.
+const GOOGLE_CREDENTIALS_PATH = '/etc/secrets/GOOGLE_CREDENTIALS';
+// ------------------------------------
+
+const FOLDER_ID = process.env.DRIVE_FOLDER_ID;
+
+// Thiết lập EJS
 app.set('view engine', 'ejs');
 app.use(express.static('public'));
 
-// --- BIẾN MÔI TRƯỜNG CẦN THIẾT ---
-// Đây là ĐƯỜNG DẪN đến file bí mật (do Render cung cấp)
-const GOOGLE_CREDENTIALS_PATH = process.env.GOOGLE_CREDENTIALS;
-const FOLDER_ID = process.env.DRIVE_FOLDER_ID;
-
-// Hàm xác thực với Google (ĐÃ CẬP NHẬT)
+// Hàm xác thực với Google
 async function getGoogleAuth() {
-  if (!GOOGLE_CREDENTIALS_PATH) {
-    console.error('LỖI: Biến môi trường GOOGLE_CREDENTIALS (chỉ đường dẫn) chưa được thiết lập.');
-    return null;
-  }
-
-  // Kiểm tra xem file bí mật có tồn tại tại đường dẫn đó không
+  // Kiểm tra xem file bí mật có tồn tại tại đường dẫn Render cung cấp không
   if (!fs.existsSync(GOOGLE_CREDENTIALS_PATH)) {
     console.error(`LỖI: Không tìm thấy file credentials tại: ${GOOGLE_CREDENTIALS_PATH}`);
+    console.error('Hãy đảm bảo bạn đã tạo "Secret File" trên Render với FILENAME là "GOOGLE_CREDENTIALS".');
     return null;
   }
 
   try {
     const scopes = ['https://www.googleapis.com/auth/drive.readonly'];
     
-    // Sử dụng 'keyFile' thay vì 'credentials'
-    // Thư viện Google sẽ tự động đọc và phân tích file JSON tại đường dẫn này
+    // Sử dụng 'keyFile' với đường dẫn cố định
     const auth = new google.auth.GoogleAuth({
       keyFile: GOOGLE_CREDENTIALS_PATH,
       scopes,
@@ -45,9 +43,14 @@ async function getGoogleAuth() {
 
 // Trang chủ
 app.get('/', async (req, res) => {
+  // Kiểm tra xem FOLDER_ID có tồn tại không
+  if (!FOLDER_ID) {
+     return res.status(500).send('Lỗi cấu hình: Biến môi trường DRIVE_FOLDER_ID chưa được thiết lập.');
+  }
+
   const auth = await getGoogleAuth();
-  if (!auth || !FOLDER_ID) {
-    return res.status(500).send('Lỗi cấu hình máy chủ. Vui lòng kiểm tra biến môi trường.');
+  if (!auth) {
+    return res.status(500).send('Lỗi cấu hình máy chủ: Không thể xác thực với Google.');
   }
 
   const drive = google.drive({ version: 'v3', auth });
